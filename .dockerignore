@@ -1,0 +1,25 @@
+# Exclude everything that doesn't need to be inside the Docker image.
+# Smaller context = faster builds.
+
+# Virtual environment (dependencies are re-installed inside the image)
+.venv/
+
+# Git and editor files
+.git/
+.gitignore
+.vscode/
+
+# Local environment secrets (injected at runtime via docker-compose env_file)
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Alembic generated migrations are needed, but not the cache
+alembic/versions/__pycache__/
+
+# Docs
+README.md

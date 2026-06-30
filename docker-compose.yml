@@ -1,0 +1,56 @@
+services:
+
+  # ── PostgreSQL database ───────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine        # Alpine = smaller image, same Postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: gotdle_db
+    volumes:
+      # Named volume: data persists across container restarts and rebuilds.
+      # Without this, the database is wiped every time you run docker compose down.
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      # Expose Postgres to your host machine so you can connect with TablePlus, psql, etc.
+      # Format: "host_port:container_port"
+      - "5432:5432"
+    healthcheck:
+      # Docker will probe this command every 5s. The api service won't start until
+      # this returns healthy — prevents "connection refused" errors on startup.
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── FastAPI application ───────────────────────────────────────────────────
+  api:
+    build: .                         # Build image from the Dockerfile in this folder
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      # Load all variables from .env (SECRET_KEY, DEBUG, etc.)
+      # Variables set under `environment` below will override anything in .env
+      - .env
+    environment:
+      # Override DATABASE_URL from .env: inside Docker, the db host is the
+      # service name "db", not "localhost"
+      DATABASE_URL: postgresql+asyncpg://postgres:password@db:5432/gotdle_db
+    depends_on:
+      db:
+        # Wait for the db healthcheck to pass before starting this service
+        condition: service_healthy
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn main:app --host 0.0.0.0 --port 8000"
+      # 1. Run any pending migrations first
+      # 2. Then start the API server
+      # This ensures the schema is always up to date when the app starts
+
+# ── Named volumes ─────────────────────────────────────────────────────────────
+# Declaring the volume here makes it managed by Docker (survives compose down).
+# To fully wipe the database: docker compose down -v
+volumes:
+  postgres_data:
