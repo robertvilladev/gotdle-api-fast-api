@@ -49,6 +49,16 @@ services:
       # 2. Then start the API server
       # This ensures the schema is always up to date when the app starts
 
+  # ── CloudBeaver (modern DB web UI) ────────────────────────────────────────
+  cloudbeaver:
+    image: dbeaver/cloudbeaver:latest
+    restart: unless-stopped
+    ports:
+      - "8978:8978"
+    depends_on:
+      db:
+        condition: service_healthy
+
 # ── Named volumes ─────────────────────────────────────────────────────────────
 # Declaring the volume here makes it managed by Docker (survives compose down).
 # To fully wipe the database: docker compose down -v

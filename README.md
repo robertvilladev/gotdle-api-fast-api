@@ -46,6 +46,7 @@ gotdle-api-fast-api/
 - [uv](https://docs.astral.sh/uv/) installed
 
 Install `uv` (if not already):
+
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
@@ -74,6 +75,7 @@ DATABASE_URL=postgresql+asyncpg://postgres:yourpassword@localhost:5432/gotdle_db
 ```
 
 Generate a secure secret key:
+
 ```bash
 uv run python -c "import secrets; print(secrets.token_hex(32))"
 ```
@@ -91,9 +93,10 @@ uv run uvicorn main:app --reload
 ```
 
 The API will be available at:
-- **API**: http://localhost:8000
-- **Interactive docs (Swagger)**: http://localhost:8000/docs
-- **Alternative docs (ReDoc)**: http://localhost:8000/redoc
+
+- **API**: <http://localhost:8000>
+- **Interactive docs (Swagger)**: <http://localhost:8000/docs>
+- **Alternative docs (ReDoc)**: <http://localhost:8000/redoc>
 
 ## API Endpoints
 
@@ -125,9 +128,19 @@ docker compose down
 docker compose down -v
 ```
 
+This setup also includes CloudBeaver for a modern visual database UI at <http://localhost:8978>.
+
+After opening CloudBeaver, create a PostgreSQL connection with:
+
+- **Host**: `db` (if CloudBeaver runs in Docker) or `localhost` (from your host machine)
+- **Port**: `5432`
+- **Database**: `gotdle_db`
+- **Username**: `postgres`
+- **Password**: `password`
+
 On first start, the API container automatically runs `alembic upgrade head` before starting the server, so the database schema is always in sync.
 
-The API and Swagger docs are available at the same URLs: http://localhost:8000 and http://localhost:8000/docs.
+The API and Swagger docs are available at the same URLs: <http://localhost:8000> and <http://localhost:8000/docs>.
 
 > **Note**: When running locally (without Docker), `DATABASE_URL` in `.env` uses `localhost` as the host. Docker overrides this to use `db` (the internal service name) automatically — you don't need to change anything.
 
@@ -158,4 +171,24 @@ uv run alembic downgrade -1
 
 # Check current migration version
 uv run alembic current
+```
+
+When developing with Docker, generate migration files on your host machine (in this repo), not inside the running `api` container.
+
+Reason:
+
+- The container runs as a non-root user, so creating new files under `/app` can fail.
+- The project files are copied into the image at build time, so new files created inside the container are not persisted back to your repo.
+
+If your local `.env` DB credentials do not match Docker Postgres credentials, use a one-off override to generate migrations against the Docker database:
+
+```bash
+DATABASE_URL=postgresql+asyncpg://postgres:password@localhost:5432/gotdle_db \
+uv run alembic revision --autogenerate -m "describe your change"
+```
+
+Then rebuild/start Docker so the API image includes the new migration file:
+
+```bash
+docker compose up --build -d
 ```
