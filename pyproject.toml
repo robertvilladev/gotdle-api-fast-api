@@ -1,9 +1,9 @@
 [project]
 name = "gotdle-api-fast-api"
 version = "0.1.0"
-description = "Add your description here"
+description = "API for Gotdle, a daily Game of Thrones guessing game"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 dependencies = [
     "alembic>=1.18.5",
     "asyncpg>=0.31.0",
@@ -15,6 +15,45 @@ dependencies = [
     "pydantic[email]>=2.13.4",
     "python-jose[cryptography]>=3.5.0",
     "python-multipart>=0.0.32",
-    "sqlalchemy>=2.0.51",
+    "sqlalchemy[asyncio]>=2.1.6",
     "uvicorn[standard]>=0.49.0",
 ]
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.16.0",
+    "mypy>=2.4.1",
+    "pytest>=9.2.0",
+    "pytest-asyncio>=1.4.1",
+    "ruff>=0.17.3",
+]
+
+[tool.ruff]
+line-length = 88
+extend-exclude = ["alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC"]
+
+[tool.ruff.lint.isort]
+# the local alembic/ folder would otherwise make ruff treat the package as first-party
+known-third-party = ["alembic"]
+
+[tool.mypy]
+strict = true
+plugins = ["pydantic.mypy"]
+exclude = ["^alembic/versions/"]
+
+[[tool.mypy.overrides]]
+# Parked auth deps ship no type stubs; they go away when auth moves to pyjwt/pwdlib.
+module = ["jose.*", "passlib.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["app.core.security"]
+warn_return_any = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
