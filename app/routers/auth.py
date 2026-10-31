@@ -18,7 +18,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 async def register(
     payload: UserCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-):
+) -> User:
     result = await db.execute(select(User).where(User.email == payload.email))
     if result.scalar_one_or_none():
         raise HTTPException(
@@ -37,7 +37,7 @@ async def register(
 async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[AsyncSession, Depends(get_db)],
-):
+) -> Token:
     result = await db.execute(select(User).where(User.email == form_data.username))
     user = result.scalar_one_or_none()
 

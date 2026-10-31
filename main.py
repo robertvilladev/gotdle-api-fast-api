@@ -1,3 +1,4 @@
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -9,7 +10,7 @@ from app.routers import auth, users
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logger.info(f"Starting {settings.APP_NAME}")
     yield
     logger.info(f"Shutting down {settings.APP_NAME}")
@@ -30,5 +31,5 @@ app.include_router(users.router)
 
 
 @app.get("/")
-def health_check():
+def health_check() -> dict[str, str]:
     return {"status": "ok", "app": settings.APP_NAME}

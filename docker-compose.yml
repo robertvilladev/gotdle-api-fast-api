@@ -2,7 +2,7 @@ services:
 
   # ── PostgreSQL database ───────────────────────────────────────────────────
   db:
-    image: postgres:16-alpine        # Alpine = smaller image, same Postgres
+    image: postgres:17-alpine        # Alpine = smaller image, same Postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
